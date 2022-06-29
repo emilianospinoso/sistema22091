@@ -1,5 +1,5 @@
 from flask import Flask
-from flask import render_template , request
+from flask import render_template , request , redirect
 from flaskext.mysql import MySQL
 from datetime import datetime
 
@@ -15,12 +15,22 @@ mysql.init_app(app)
 
 @app.route("/")
 def index():
-    sql = "INSERT INTO `empleados` (`id`, `nombre`, `correo`, `foto`) VALUES (NULL, 'Diego', 'eldiego@gmail.com', 'fotola.jpg');"
+    sql = "SELECT * FROM `empleados`;"
     conn = mysql.connect()
     cursor=conn.cursor()
     cursor.execute(sql)
+    empleados =  cursor.fetchall()
+    print(empleados)
     conn.commit()  
-    return render_template('empleados/index.html')
+    return render_template('empleados/index.html' , empleados=empleados )
+
+@app.route("/destroy/<int:id>")
+def destroy(id):
+    conn = mysql.connect()
+    cursor=conn.cursor()
+    cursor.execute("DELETE FROM empleados WHERE id=%s",(id))
+    conn.commit() 
+    return redirect('/')
 
 @app.route("/create")
 def create():
@@ -34,7 +44,8 @@ def storage():
 
     now   =  datetime.now()
     ahora =  now.strftime("%Y%H%M%S")
-
+    nuevoNombreFoto = ''
+    
     if _foto.filename != '':
         nuevoNombreFoto = ahora + _foto.filename
         _foto.save('uploads/' + nuevoNombreFoto)
